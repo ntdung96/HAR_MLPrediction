@@ -2,7 +2,8 @@
 title: "Human Activity Recognition - Prediction"
 author: "Dung Nguyen"
 date: "12/8/2020"
-output: md_document
+output:
+  md_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -71,15 +72,22 @@ My approach to predict "classe" from the Human Activity Recognition dataset is r
 
 ### b. Fitting models and prediction algorithms
 
+Throughout the model building process, I will use 5-fold cross validation integrated in caret to estimate accuracy
+
 #### Model 1: Linear discriminant analysis (LDA)
 
 ```{r}
+#Set seed and set cross validation parameters
+set.seed(4796)
+t.control <- trainControl(method = "repeatedcv", number = 7, repeats = 3,
+                              allowParallel = TRUE)
+
 #Fit Linear Discriminant Analysis
-model_lda <- train(classe ~ ., method = "lda", data = train)
+model_lda <- train(classe ~ ., method = "lda", trControl = t.control, data = train)
 model_lda
 ```
 
-The accuracy of LDA model is `r model_lda$results$accuracy`.
+The accuracy of LDA model is `r model_lda$results$Accuracy`. This accuracy is estimated from repeated 10-fold cross-validation with 3 repeats. The estimated out-of-sample error = 1 - estimated out-of-sample accuracy: `r 1 - model_lda$results[[2]]`.
 
 #### Model 2: Random Forest
 
@@ -91,13 +99,14 @@ registerDoParallel(cl)
 
 model_rf <- train(classe ~ ., method = "rf", ntree=128,
                   tuneGrid=data.frame(.mtry = 7),
-                  data = train, allowParallel = TRUE)
+                  trControl = t.control, 
+                  data = train)
 stopCluster(cl)
 remove(cl)
 registerDoSEQ()
 model_rf
 ```
-The accuracy of Random Forest model is `r model_rf$results$accuracy`.
+The accuracy of Random Forest model is `r model_rf$results$Accuracy`. This accuracy is estimated from repeated 10-fold cross-validation with 3 repeats. The estimated out-of-sample error = 1 - estimated out-of-sample accuracy: `r 1 - model_rf$results[[2]]`.
 
 #### Model stacking
 
@@ -128,12 +137,17 @@ To stack 2 models for even better prediction, I combine 2 models using Support V
 
 ```{r}
 #Create prediction from 2 models using SVM
-model_svm <- train(classe_sb ~ ., data = meta, method = "svmLinear")
+model_svm <- train(classe_sb ~ ., data = meta, method = "svmLinear",
+                   trControl = t.control)
 pred_svm <- predict(model_svm, data = meta)
 
 #Result
 confusionMatrix(pred_svm, test$classe)
+```
 
+The accuracy of the stacking model is `r model_svm$results$Accuracy`. This accuracy is estimated from repeated 10-fold cross-validation with 3 repeats. The estimated out-of-sample error = 1 - estimated out-of-sample accuracy: `r 1 - model_svm$results$Accuracy`.
+
+```{r}
 #Compare models
 compare <- resamples(list(LDA=model_lda, RF=model_rf, stacking=model_svm))
 bwplot(compare, metric = "Accuracy")

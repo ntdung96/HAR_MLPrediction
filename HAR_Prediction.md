@@ -87,10 +87,18 @@ stack them using Support Vector Machine (SVM).
 
 ### b. Fitting models and prediction algorithms
 
+Throughout the model building process, I will use 5-fold cross
+validation integrated in caret to estimate accuracy
+
 #### Model 1: Linear discriminant analysis (LDA)
 
+    #Set seed and set cross validation parameters
+    set.seed(4796)
+    t.control <- trainControl(method = "repeatedcv", number = 7, repeats = 3,
+                                  allowParallel = TRUE)
+
     #Fit Linear Discriminant Analysis
-    model_lda <- train(classe ~ ., method = "lda", data = train)
+    model_lda <- train(classe ~ ., method = "lda", trControl = t.control, data = train)
     model_lda
 
     ## Linear Discriminant Analysis 
@@ -100,14 +108,16 @@ stack them using Support Vector Machine (SVM).
     ##     5 classes: 'A', 'B', 'C', 'D', 'E' 
     ## 
     ## No pre-processing
-    ## Resampling: Bootstrapped (25 reps) 
-    ## Summary of sample sizes: 14718, 14718, 14718, 14718, 14718, 14718, ... 
+    ## Resampling: Cross-Validated (7 fold, repeated 3 times) 
+    ## Summary of sample sizes: 12616, 12616, 12615, 12616, 12616, 12615, ... 
     ## Resampling results:
     ## 
     ##   Accuracy   Kappa    
-    ##   0.7015751  0.6224846
+    ##   0.7035817  0.6249964
 
-The accuracy of LDA model is .
+The accuracy of LDA model is 0.7035817. This accuracy is estimated from
+repeated 10-fold cross-validation with 3 repeats. The estimated
+out-of-sample error = 1 - estimated out-of-sample accuracy: 0.2964183.
 
 #### Model 2: Random Forest
 
@@ -125,7 +135,8 @@ The accuracy of LDA model is .
 
     model_rf <- train(classe ~ ., method = "rf", ntree=128,
                       tuneGrid=data.frame(.mtry = 7),
-                      data = train, allowParallel = TRUE)
+                      trControl = t.control, 
+                      data = train)
     stopCluster(cl)
     remove(cl)
     registerDoSEQ()
@@ -138,16 +149,19 @@ The accuracy of LDA model is .
     ##     5 classes: 'A', 'B', 'C', 'D', 'E' 
     ## 
     ## No pre-processing
-    ## Resampling: Bootstrapped (25 reps) 
-    ## Summary of sample sizes: 14718, 14718, 14718, 14718, 14718, 14718, ... 
+    ## Resampling: Cross-Validated (7 fold, repeated 3 times) 
+    ## Summary of sample sizes: 12618, 12616, 12614, 12615, 12615, 12616, ... 
     ## Resampling results:
     ## 
-    ##   Accuracy   Kappa   
-    ##   0.9919538  0.989818
+    ##   Accuracy  Kappa    
+    ##   0.993749  0.9920926
     ## 
     ## Tuning parameter 'mtry' was held constant at a value of 7
 
-The accuracy of Random Forest model is .
+The accuracy of Random Forest model is 0.993749. This accuracy is
+estimated from repeated 10-fold cross-validation with 3 repeats. The
+estimated out-of-sample error = 1 - estimated out-of-sample accuracy:
+0.006251.
 
 #### Model stacking
 
@@ -173,34 +187,34 @@ Now I compared the accuracy of 2 models to the test data.
     ## 
     ##           Reference
     ## Prediction    A    B    C    D    E
-    ##          A 1119  164   74   46   29
-    ##          B   28  592   82   29  144
-    ##          C  136  111  561   89   75
-    ##          D  104   33  107  614   89
-    ##          E    8   49   31   26  564
+    ##          A 1142  136   80   46   38
+    ##          B   35  593   72   32  151
+    ##          C  112  122  579  102   86
+    ##          D  101   42  103  591   88
+    ##          E    5   56   21   33  538
     ## 
     ## Overall Statistics
     ##                                           
-    ##                Accuracy : 0.7035          
-    ##                  95% CI : (0.6905, 0.7163)
+    ##                Accuracy : 0.7021          
+    ##                  95% CI : (0.6891, 0.7149)
     ##     No Information Rate : 0.2845          
     ##     P-Value [Acc > NIR] : < 2.2e-16       
     ##                                           
-    ##                   Kappa : 0.6251          
+    ##                   Kappa : 0.6231          
     ##                                           
     ##  Mcnemar's Test P-Value : < 2.2e-16       
     ## 
     ## Statistics by Class:
     ## 
     ##                      Class: A Class: B Class: C Class: D Class: E
-    ## Sensitivity            0.8022   0.6238   0.6561   0.7637   0.6260
-    ## Specificity            0.9108   0.9284   0.8985   0.9188   0.9715
-    ## Pos Pred Value         0.7814   0.6766   0.5772   0.6484   0.8319
-    ## Neg Pred Value         0.9205   0.9114   0.9252   0.9520   0.9203
+    ## Sensitivity            0.8186   0.6249   0.6772   0.7351   0.5971
+    ## Specificity            0.9145   0.9267   0.8958   0.9185   0.9713
+    ## Pos Pred Value         0.7920   0.6716   0.5784   0.6389   0.8239
+    ## Neg Pred Value         0.9269   0.9115   0.9293   0.9465   0.9146
     ## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
-    ## Detection Rate         0.2282   0.1207   0.1144   0.1252   0.1150
-    ## Detection Prevalence   0.2920   0.1784   0.1982   0.1931   0.1383
-    ## Balanced Accuracy      0.8565   0.7761   0.7773   0.8412   0.7987
+    ## Detection Rate         0.2329   0.1209   0.1181   0.1205   0.1097
+    ## Detection Prevalence   0.2940   0.1801   0.2041   0.1886   0.1332
+    ## Balanced Accuracy      0.8666   0.7758   0.7865   0.8268   0.7842
 
     confusionMatrix(pred_rf, test$classe)
 
@@ -208,34 +222,34 @@ Now I compared the accuracy of 2 models to the test data.
     ## 
     ##           Reference
     ## Prediction    A    B    C    D    E
-    ##          A 1392    1    0    0    0
-    ##          B    3  946    3    0    0
-    ##          C    0    2  850    3    0
-    ##          D    0    0    2  801    0
-    ##          E    0    0    0    0  901
+    ##          A 1395    2    0    0    0
+    ##          B    0  945    1    0    0
+    ##          C    0    2  852   15    0
+    ##          D    0    0    2  787    6
+    ##          E    0    0    0    2  895
     ## 
     ## Overall Statistics
     ##                                           
-    ##                Accuracy : 0.9971          
-    ##                  95% CI : (0.9952, 0.9984)
+    ##                Accuracy : 0.9939          
+    ##                  95% CI : (0.9913, 0.9959)
     ##     No Information Rate : 0.2845          
     ##     P-Value [Acc > NIR] : < 2.2e-16       
     ##                                           
-    ##                   Kappa : 0.9964          
+    ##                   Kappa : 0.9923          
     ##                                           
     ##  Mcnemar's Test P-Value : NA              
     ## 
     ## Statistics by Class:
     ## 
     ##                      Class: A Class: B Class: C Class: D Class: E
-    ## Sensitivity            0.9978   0.9968   0.9942   0.9963   1.0000
-    ## Specificity            0.9997   0.9985   0.9988   0.9995   1.0000
-    ## Pos Pred Value         0.9993   0.9937   0.9942   0.9975   1.0000
-    ## Neg Pred Value         0.9991   0.9992   0.9988   0.9993   1.0000
+    ## Sensitivity            1.0000   0.9958   0.9965   0.9789   0.9933
+    ## Specificity            0.9994   0.9997   0.9958   0.9980   0.9995
+    ## Pos Pred Value         0.9986   0.9989   0.9804   0.9899   0.9978
+    ## Neg Pred Value         1.0000   0.9990   0.9993   0.9959   0.9985
     ## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
-    ## Detection Rate         0.2838   0.1929   0.1733   0.1633   0.1837
-    ## Detection Prevalence   0.2841   0.1941   0.1743   0.1637   0.1837
-    ## Balanced Accuracy      0.9988   0.9977   0.9965   0.9979   1.0000
+    ## Detection Rate         0.2845   0.1927   0.1737   0.1605   0.1825
+    ## Detection Prevalence   0.2849   0.1929   0.1772   0.1621   0.1829
+    ## Balanced Accuracy      0.9997   0.9978   0.9961   0.9885   0.9964
 
 From the plot above, the LDA model seems to classify not so good
 compared to the Random Forest model.
@@ -244,7 +258,8 @@ To stack 2 models for even better prediction, I combine 2 models using
 Support Vector Machine (SVM). This is “meta-learning” actually.
 
     #Create prediction from 2 models using SVM
-    model_svm <- train(classe_sb ~ ., data = meta, method = "svmLinear")
+    model_svm <- train(classe_sb ~ ., data = meta, method = "svmLinear",
+                       trControl = t.control)
     pred_svm <- predict(model_svm, data = meta)
 
     #Result
@@ -254,40 +269,45 @@ Support Vector Machine (SVM). This is “meta-learning” actually.
     ## 
     ##           Reference
     ## Prediction    A    B    C    D    E
-    ##          A 1392    1    0    0    0
-    ##          B    3  946    3    0    0
-    ##          C    0    2  850    3    0
-    ##          D    0    0    2  801    0
-    ##          E    0    0    0    0  901
+    ##          A 1395    2    0    0    0
+    ##          B    0  945    1    0    0
+    ##          C    0    2  852   15    0
+    ##          D    0    0    2  787    6
+    ##          E    0    0    0    2  895
     ## 
     ## Overall Statistics
     ##                                           
-    ##                Accuracy : 0.9971          
-    ##                  95% CI : (0.9952, 0.9984)
+    ##                Accuracy : 0.9939          
+    ##                  95% CI : (0.9913, 0.9959)
     ##     No Information Rate : 0.2845          
     ##     P-Value [Acc > NIR] : < 2.2e-16       
     ##                                           
-    ##                   Kappa : 0.9964          
+    ##                   Kappa : 0.9923          
     ##                                           
     ##  Mcnemar's Test P-Value : NA              
     ## 
     ## Statistics by Class:
     ## 
     ##                      Class: A Class: B Class: C Class: D Class: E
-    ## Sensitivity            0.9978   0.9968   0.9942   0.9963   1.0000
-    ## Specificity            0.9997   0.9985   0.9988   0.9995   1.0000
-    ## Pos Pred Value         0.9993   0.9937   0.9942   0.9975   1.0000
-    ## Neg Pred Value         0.9991   0.9992   0.9988   0.9993   1.0000
+    ## Sensitivity            1.0000   0.9958   0.9965   0.9789   0.9933
+    ## Specificity            0.9994   0.9997   0.9958   0.9980   0.9995
+    ## Pos Pred Value         0.9986   0.9989   0.9804   0.9899   0.9978
+    ## Neg Pred Value         1.0000   0.9990   0.9993   0.9959   0.9985
     ## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
-    ## Detection Rate         0.2838   0.1929   0.1733   0.1633   0.1837
-    ## Detection Prevalence   0.2841   0.1941   0.1743   0.1637   0.1837
-    ## Balanced Accuracy      0.9988   0.9977   0.9965   0.9979   1.0000
+    ## Detection Rate         0.2845   0.1927   0.1737   0.1605   0.1825
+    ## Detection Prevalence   0.2849   0.1929   0.1772   0.1621   0.1829
+    ## Balanced Accuracy      0.9997   0.9978   0.9961   0.9885   0.9964
+
+The accuracy of the stacking model is 0.9938813. This accuracy is
+estimated from repeated 10-fold cross-validation with 3 repeats. The
+estimated out-of-sample error = 1 - estimated out-of-sample accuracy:
+0.0061187.
 
     #Compare models
     compare <- resamples(list(LDA=model_lda, RF=model_rf, stacking=model_svm))
     bwplot(compare, metric = "Accuracy")
 
-![](HAR_Prediction_files/figure-markdown_strict/unnamed-chunk-7-1.png)
+![](HAR_Prediction_files/figure-markdown_strict/unnamed-chunk-8-1.png)
 
 ### 4. Submission
 
@@ -313,7 +333,7 @@ Random Forest)
     ## 2            A          A    A
     ## 3            B          B    B
     ## 4            C          A    A
-    ## 5            C          A    A
+    ## 5            A          A    A
     ## 6            C          E    E
     ## 7            D          D    D
     ## 8            D          B    B
