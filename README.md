@@ -1,4 +1,6 @@
-1. Background
+# Human Activity Recognition - A Quick Practical Machine Learning Approach
+
+## 1. Background
 -------------
 
 ### a. Sypnosis
@@ -26,7 +28,7 @@ is the “classe” variable in the training set.
 This report covers how the model was built, what the expected
 out-of-sample error is, and evaluates the prediction model.
 
-2. Data
+## 2. Data
 -------
 
 ### a. Training set and testing set
@@ -73,7 +75,7 @@ will be evaluate using this evaluation set.
     eva <- read.csv("pml-testing.csv",
                     na.strings = c("NA","#DIV/0!", ""))[,-c(1:7)]
 
-3. Prediction algorithm
+## 3. Prediction algorithm
 -----------------------
 
 ### a. Prediction approach
@@ -289,7 +291,7 @@ Support Vector Machine (SVM). This is “meta-learning” actually.
 
 ![](HAR_Prediction_files/figure-markdown_strict/unnamed-chunk-7-1.png)
 
-### 4. Submission
+## 4. Submission
 
 In the evaluation set, I will apply 2 models of LDA and Random Forest
 and stack them using SVM model.
