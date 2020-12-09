@@ -2,14 +2,14 @@
 title: "Human Activity Recognition - Prediction"
 author: "Dung Nguyen"
 date: "12/8/2020"
-output: html_document
+output: md_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# 1. Background
+## 1. Background
 
 ### a. Sypnosis
 Using devices such as *Jawbone Up*, *Nike FuelBand*, and *Fitbit* it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how *much* of a particular activity they do, but they rarely quantify *how well they do it*. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
@@ -19,7 +19,7 @@ The goal is to predict the manner in which they did the exercise. This is the "c
 
 This report covers how the model was built, what the expected out-of-sample error is, and evaluates the prediction model.
 
-# 2. Data
+## 2. Data
 
 ### a. Training set and testing set
 
@@ -63,15 +63,15 @@ eva <- read.csv("pml-testing.csv",
                 na.strings = c("NA","#DIV/0!", ""))[,-c(1:7)]
 ```
 
-# 3. Prediction algorithm
+## 3. Prediction algorithm
 
 ### a. Prediction approach
 
 My approach to predict "classe" from the Human Activity Recognition dataset is rather simple and naive. I will choose a model from the linear model family and a tree-based algorithm, estimate their expected out-of-sample error using cross-validation and blend (stacking) them. I will use Linear Discriminant Analysis (LDA) and Random Forest. I will stack them using Support Vector Machine (SVM).
 
-# b. Fitting models and prediction algorithms
+### b. Fitting models and prediction algorithms
 
-### a. Model 1: Linear discriminant analysis (LDA)
+#### Model 1: Linear discriminant analysis (LDA)
 
 ```{r}
 #Fit Linear Discriminant Analysis
@@ -81,18 +81,25 @@ model_lda
 
 The accuracy of LDA model is `r model_lda$results$accuracy`.
 
-### b. Model 2: Random Forest
+#### Model 2: Random Forest
 
 ```{r}
-#Fit Random Forest with total 400 trees grown and 7 variables each split
-model_rf <- train(classe ~ ., method = "rf", ntree=400,
+#Fit Random Forest with total 128 trees grown and 7 variables each split with parallel computing
+library(doParallel)
+cl = makeCluster(4)
+registerDoParallel(cl)
+
+model_rf <- train(classe ~ ., method = "rf", ntree=128,
                   tuneGrid=data.frame(.mtry = 7),
-                  data = train)
+                  data = train, allowParallel = TRUE)
+stopCluster(cl)
+remove(cl)
+registerDoSEQ()
 model_rf
 ```
 The accuracy of Random Forest model is `r model_rf$results$accuracy`.
 
-### c. Model stacking
+#### Model stacking
 
 Now we can prepare and compare the accuracy of predicted classes produced from 2 models.
 
@@ -113,7 +120,6 @@ Now I compared the accuracy of 2 models to the test data.
 ```{r}
 confusionMatrix(pred_lda, test$classe)
 confusionMatrix(pred_rf, test$classe)
-ggplot2::qplot(pred_lda, pred_rf, color = test$classe)
 ```
 
 From the plot above, the LDA model seems to classify not so good compared to the Random Forest model.
@@ -127,9 +133,13 @@ pred_svm <- predict(model_svm, data = meta)
 
 #Result
 confusionMatrix(pred_svm, test$classe)
+
+#Compare models
+compare <- resamples(list(LDA=model_lda, RF=model_rf, stacking=model_svm))
+bwplot(compare, metric = "Accuracy")
 ```
 
-# 3. Submission
+### 4. Submission
 
 In the evaluation set, I will apply 2 models of LDA and Random Forest and stack them using SVM model.
 
