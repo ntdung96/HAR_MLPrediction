@@ -1,9 +1,10 @@
 ---
-title: "Human Activity Recognition - Prediction"
+title: "Human Activity Recognition - A Model Stacking Prediction Approach"
 author: "Dung Nguyen"
 date: "12/8/2020"
 output:
   md_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -72,7 +73,7 @@ My approach to predict "classe" from the Human Activity Recognition dataset is r
 
 ### b. Fitting models and prediction algorithms
 
-Throughout the model building process, I will use 5-fold cross validation integrated in caret to estimate accuracy
+Throughout the model building process, I will use 7-fold cross validation integrated in caret to estimate accuracy
 
 #### Model 1: Linear discriminant analysis (LDA)
 
@@ -87,7 +88,7 @@ model_lda <- train(classe ~ ., method = "lda", trControl = t.control, data = tra
 model_lda
 ```
 
-The accuracy of LDA model is `r model_lda$results$Accuracy`. This accuracy is estimated from repeated 10-fold cross-validation with 3 repeats. The estimated out-of-sample error = 1 - estimated out-of-sample accuracy: `r 1 - model_lda$results[[2]]`.
+The accuracy of LDA model is `r model_lda$results$Accuracy`. This accuracy is estimated from repeated 7-fold cross-validation with 3 repeats. The estimated out-of-sample error = 1 - estimated out-of-sample accuracy: `r 1 - model_lda$results[[2]]`.
 
 #### Model 2: Random Forest
 
@@ -106,7 +107,7 @@ remove(cl)
 registerDoSEQ()
 model_rf
 ```
-The accuracy of Random Forest model is `r model_rf$results$Accuracy`. This accuracy is estimated from repeated 10-fold cross-validation with 3 repeats. The estimated out-of-sample error = 1 - estimated out-of-sample accuracy: `r 1 - model_rf$results[[2]]`.
+The accuracy of Random Forest model is `r model_rf$results$Accuracy`. This accuracy is estimated from repeated 7-fold cross-validation with 3 repeats. The estimated out-of-sample error = 1 - estimated out-of-sample accuracy: `r 1 - model_rf$results[[2]]`.
 
 #### Model stacking
 
@@ -145,7 +146,7 @@ pred_svm <- predict(model_svm, data = meta)
 confusionMatrix(pred_svm, test$classe)
 ```
 
-The accuracy of the stacking model is `r model_svm$results$Accuracy`. This accuracy is estimated from repeated 10-fold cross-validation with 3 repeats. The estimated out-of-sample error = 1 - estimated out-of-sample accuracy: `r 1 - model_svm$results$Accuracy`.
+The accuracy of the stacking model is `r model_svm$results$Accuracy`. This accuracy is estimated from repeated 7-fold cross-validation with 3 repeats. The estimated out-of-sample error = 1 - estimated out-of-sample accuracy: `r 1 - model_svm$results$Accuracy`.
 
 ```{r}
 #Compare models
